@@ -6,7 +6,8 @@
   "scripts": {
     "dev:compiler": "npx tsx packages/core/src/index.ts",
     "build:core": "tsc -p packages/core/tsconfig.json",
-    "test": "npm run build:core && node --test packages/core/test/parser.test.js"
+    "test": "npm run build:core && npm run build:cli && node --test packages/core/test/*.test.js packages/cli/test/*.test.js",
+    "build:cli": "npm run build --workspace packages/cli"
   },
   "private": true,
   "workspaces": [
@@ -18,7 +19,7 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "type": "module",
   "bugs": {
     "url": "https://github.com/MirrowApp/mirrow/issues"

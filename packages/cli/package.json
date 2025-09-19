@@ -1,6 +1,6 @@
 {
-  "name": "@mirrow/cli",
-  "version": "1.0.0",
+  "name": "mirrow",
+  "version": "0.1.0",
   "description": "",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -10,15 +10,25 @@
   "scripts": {
     "build": "tsc -p tsconfig.json"
   },
+  "files": [
+    "dist"
+  ],
   "dependencies": {
-    "@mirrow/core": "*",
-    "commander": "^12.1.0"
+    "@mirrow/core": "^0.1.2",
+    "commander": "^12.1.0",
+    "chokidar": "^3.6.0"
   },
   "devDependencies": {
     "@types/node": "^24.5.2"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "svg",
+    "cli",
+    "animation",
+    "dsl",
+    "compiler"
+  ],
+  "author": "Osa Mannella",
+  "license": "MIT",
   "type": "module"
 }

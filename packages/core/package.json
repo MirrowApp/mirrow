@@ -1,13 +1,23 @@
 {
-  "name": "@mirrow/core",
-  "version": "1.0.0",
-  "description": "",
+  "name": "@mirrowjs/core",
+  "version": "0.1.2",
+  "description": "Core compiler and parser for the Mirrow DSL",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "scripts": {},
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "keywords": [
+    "svg",
+    "dsl",
+    "animation",
+    "compiler"
+  ],
+  "files": [
+    "dist"
+  ],
+  "author": "Osa Mannella",
+  "license": "MIT",
   "type": "module",
   "devDependencies": {
     "@types/node": "^24.5.2"

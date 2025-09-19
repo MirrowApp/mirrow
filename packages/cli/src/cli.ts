@@ -3,7 +3,7 @@ import process from "node:process";
 
 import { Command, InvalidArgumentError } from "commander";
 
-import { runMirrow } from "./runner.js";
+import { runMirrow, watchMirrow } from "./runner.js";
 import type { CliOptions } from "./runner.js";
 
 function parseDepth(raw: string): number | typeof Infinity {
@@ -34,6 +34,7 @@ export async function runCli(argv: string[]): Promise<void> {
       parseDepth,
       0
     )
+    .option("-w, --watch", "Watch inputs and rebuild on change")
     .allowExcessArguments(false)
     .showHelpAfterError();
 
@@ -44,8 +45,29 @@ export async function runCli(argv: string[]): Promise<void> {
       depth: options.depth,
     };
 
+    const isWatchEnabled = Boolean(options.watch);
+
     try {
-      await runMirrow(cliOptions);
+      if (!isWatchEnabled) {
+        await runMirrow(cliOptions);
+        return;
+      }
+
+      const controller = new AbortController();
+      const stopWatcher = () => {
+        console.log("\nStopping watcher...");
+        controller.abort();
+      };
+
+      process.once("SIGINT", stopWatcher);
+      process.once("SIGTERM", stopWatcher);
+
+      try {
+        await watchMirrow(cliOptions, controller.signal);
+      } finally {
+        process.removeListener("SIGINT", stopWatcher);
+        process.removeListener("SIGTERM", stopWatcher);
+      }
     } catch (error) {
       if (error instanceof Error) {
         console.error(error.message);
