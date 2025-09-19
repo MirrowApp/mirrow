@@ -1,0 +1,31 @@
+{
+  "name": "mirrow",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev:compiler": "npx tsx packages/core/src/index.ts",
+    "build:core": "tsc -p packages/core/tsconfig.json",
+    "test": "npm run build:core && node --test packages/core/test/parser.test.js"
+  },
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MirrowApp/mirrow.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/MirrowApp/mirrow/issues"
+  },
+  "homepage": "https://github.com/MirrowApp/mirrow#readme",
+  "devDependencies": {
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2"
+  }
+}
