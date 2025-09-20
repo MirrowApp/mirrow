@@ -240,10 +240,16 @@ export const CSS_UNIT_SUFFIXES = new Set<string>([
   "fr",
 ]);
 
+const cssExceptions = new Set<string>(["infinite", "none", "auto"]);
+
 const specialCodeblocks = new Set<string>(["style", "script"]);
 
 export function isCssState(name: string): boolean {
   return cssStateLookup.has(normalizeCssStateName(name));
+}
+
+export function isCssException(name: string): boolean {
+  return cssExceptions.has(name);
 }
 
 export function isJsEvent(name: string): boolean {

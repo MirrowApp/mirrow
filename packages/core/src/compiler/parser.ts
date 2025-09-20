@@ -42,6 +42,7 @@ interface DirectiveGroupOptions<T> {
 import { tokenize, type Token, TokenType } from "./lexer.js";
 import {
   CSS_UNIT_SUFFIXES,
+  isCssException,
   isCssState,
   isJsEvent,
   isSpecialCodeblock,
@@ -99,7 +100,11 @@ const ATTRIBUTE_VALIDATORS: {
   },
   string: (context, spec, value) => {
     if (value.type !== "StringLiteral") {
-      failValidation(context, "expects a string value", value.position);
+      failValidation(
+        context,
+        `expects a string value got '${value.type}'`,
+        value.position
+      );
     }
     const stringValue = value as StringLiteral;
     if (spec.validator && !spec.validator(stringValue.value)) {
@@ -627,8 +632,9 @@ class Parser {
     const token = this.peek();
     const nextToken = this.peek(1);
     if (
-      token.type == TokenType.NUMBER &&
-      CSS_UNIT_SUFFIXES.has(nextToken.value.toLowerCase())
+      (token.type == TokenType.NUMBER &&
+        CSS_UNIT_SUFFIXES.has(nextToken.value.toLowerCase())) ||
+      isCssException(token.value)
     ) {
       this.advance();
       this.advance();

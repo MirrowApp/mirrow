@@ -267,13 +267,13 @@ const animationTimingAttributes = [
   createStringAttr("min"),
   createStringAttr("max"),
   createStringAttr("restart"),
-  createStringAttr("repeatCount"),
+  createNumberAttr("repeat"),
   createStringAttr("repeatDur"),
   createStringAttr("fill"),
 ];
 
 const animationAttributeTargeting = [
-  createStringAttr("attributeName"),
+  createStringAttr("prop"),
   createStringAttr("attributeType"),
 ];
 
@@ -282,9 +282,9 @@ const animationValueAttributes = [
   createStringAttr("values"),
   createStringAttr("keyTimes"),
   createStringAttr("keySplines"),
-  createStringAttr("from"),
-  createStringAttr("to"),
-  createStringAttr("by"),
+  createNumberAttr("from"),
+  createNumberAttr("to"),
+  createNumberAttr("by"),
   createStringAttr("additive"),
   createStringAttr("accumulate"),
 ];
