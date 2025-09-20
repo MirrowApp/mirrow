@@ -267,13 +267,13 @@ const animationTimingAttributes = [
   createStringAttr("min"),
   createStringAttr("max"),
   createStringAttr("restart"),
-  createNumberAttr("repeat"),
+  createNumberAttr("repeat", { produce: (value) => ({ repeatCount: value }) }),
   createStringAttr("repeatDur"),
   createStringAttr("fill"),
 ];
 
 const animationAttributeTargeting = [
-  createStringAttr("prop"),
+  createStringAttr("prop", { produce: (value) => ({ attributeName: value }) }),
   createStringAttr("attributeType"),
 ];
 

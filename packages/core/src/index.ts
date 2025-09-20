@@ -56,18 +56,24 @@ function runExample(): void {
       from: 40
       to: 60
       dur: 2s
-      repeat: infinite
+      repeat: indefinite
     }
   }
 
   @hover, @active {
     #pulse {
-      cy: 150
-      r: 60
+      cy: 150px;
+      r: 60px;
     }
   }
-}
 
+  
+}
+  style {
+    circle {
+      transition: cy 0.3s ease, r 0.3s ease, fill 0.3s ease;
+    }
+  }
   `;
   console.log(compile(code));
 }

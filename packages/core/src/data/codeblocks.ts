@@ -240,7 +240,7 @@ export const CSS_UNIT_SUFFIXES = new Set<string>([
   "fr",
 ]);
 
-const cssExceptions = new Set<string>(["infinite", "none", "auto"]);
+const cssExceptions = new Set<string>(["indefinite", "none", "auto"]);
 
 const specialCodeblocks = new Set<string>(["style", "script"]);
 
