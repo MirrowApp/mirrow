@@ -46,7 +46,7 @@ recursion goes with `--depth` (use `unbound` to traverse every nested folder).
 
 The project is organized as a monorepo:
 
-- `@mirrow/core` – the Mirrow compiler, parser, and language experiments.
+- `@mirrowjs/core` – the Mirrow compiler, parser, and language experiments.
 - `@mirrow/cli` – a lightweight CLI that will grow alongside the language.
 
 ## Shaping the roadmap 🗺️

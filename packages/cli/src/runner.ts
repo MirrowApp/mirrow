@@ -4,7 +4,7 @@ import path from "node:path";
 
 import chokidar from "chokidar";
 
-import { compile } from "@mirrow/core";
+import { compile } from "@mirrowjs/core";
 
 export interface CliOptions {
   input: string;
@@ -17,18 +17,15 @@ const WATCH_STABILITY_MS = 150;
 
 type ActionKind = "compiled" | "copied";
 
-type WatchEvent =
-  | "add"
-  | "addDir"
-  | "change"
-  | "unlink"
-  | "unlinkDir";
+type WatchEvent = "add" | "addDir" | "change" | "unlink" | "unlinkDir";
 
 type Task = () => Promise<void>;
 
 function assertMirrowFile(filePath: string): void {
   if (path.extname(filePath) !== MIRROW_EXTENSION) {
-    throw new Error(`Mirrow sources must use the ${MIRROW_EXTENSION} extension`);
+    throw new Error(
+      `Mirrow sources must use the ${MIRROW_EXTENSION} extension`
+    );
   }
 }
 
@@ -50,7 +47,11 @@ async function copyAsset(inputFile: string, outputFile: string): Promise<void> {
   logAction("copied", inputFile, outputFile);
 }
 
-function logAction(kind: ActionKind, inputPath: string, outputPath: string): void {
+function logAction(
+  kind: ActionKind,
+  inputPath: string,
+  outputPath: string
+): void {
   const from = formatPath(inputPath);
   const to = formatPath(outputPath);
   console.log(`${kind.padEnd(8)} ${from} -> ${to}`);
@@ -190,7 +191,9 @@ export async function watchMirrow(
 
   await runMirrow(options);
   console.log(
-    `Watching ${formatPath(input)} (depth: ${depth === Infinity ? "unbound" : depth})`
+    `Watching ${formatPath(input)} (depth: ${
+      depth === Infinity ? "unbound" : depth
+    })`
   );
   console.log("Press Ctrl+C to stop.\n");
 
@@ -340,7 +343,8 @@ function resolveOutputForRelative(
   isMirrow: boolean
 ): string {
   const relativeDir = path.dirname(relativePath);
-  const baseDir = relativeDir === "." ? outputRoot : path.join(outputRoot, relativeDir);
+  const baseDir =
+    relativeDir === "." ? outputRoot : path.join(outputRoot, relativeDir);
   const fileName = path.basename(relativePath);
   return isMirrow ? toSvgPath(baseDir, fileName) : path.join(baseDir, fileName);
 }
@@ -366,9 +370,11 @@ function isWithinDepth(
 function createTaskQueue(): (task: Task) => void {
   let chain = Promise.resolve();
   return (task: Task) => {
-    chain = chain.then(() => task()).catch((error) => {
-      logWatchError(error);
-    });
+    chain = chain
+      .then(() => task())
+      .catch((error) => {
+        logWatchError(error);
+      });
   };
 }
 
@@ -378,10 +384,7 @@ async function waitForAbort(
 ): Promise<void> {
   await new Promise<void>((resolve, reject) => {
     const stop = () => {
-      watcher
-        .close()
-        .then(resolve)
-        .catch(reject);
+      watcher.close().then(resolve).catch(reject);
     };
 
     if (signal.aborted) {

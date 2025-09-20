@@ -5,7 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 
-import { compile } from "@mirrow/core";
+import { compile } from "@mirrowjs/core";
 import { runMirrow, watchMirrow } from "../dist/runner.js";
 
 const MIRROW_SNIPPET = `svg { size: (24, 24) }`;
@@ -52,14 +52,20 @@ test("walks directories without recursion when depth is 0", async () => {
 
   await writeFile(path.join(inputDir, "root.mirrow"), MIRROW_SNIPPET);
   await writeFile(path.join(inputDir, "asset.txt"), "static asset");
-  await writeFile(path.join(inputDir, "nested", "child.mirrow"), MIRROW_SNIPPET);
+  await writeFile(
+    path.join(inputDir, "nested", "child.mirrow"),
+    MIRROW_SNIPPET
+  );
 
   await runMirrow({ input: inputDir, output: outputDir, depth: 0 });
 
   const rootSvg = await fs.readFile(path.join(outputDir, "root.svg"), "utf8");
   assert.equal(rootSvg.trim(), compile(MIRROW_SNIPPET).trim());
 
-  const copiedAsset = await fs.readFile(path.join(outputDir, "asset.txt"), "utf8");
+  const copiedAsset = await fs.readFile(
+    path.join(outputDir, "asset.txt"),
+    "utf8"
+  );
   assert.equal(copiedAsset, "static asset");
 
   await assert.rejects(fs.access(path.join(outputDir, "nested")), {
@@ -73,7 +79,10 @@ test("respects positive depth values and unbounded recursion", async () => {
   const outputDepthOne = path.join(base, "out-depth1");
   const outputInfinity = path.join(base, "out-infinity");
 
-  await writeFile(path.join(inputDir, "nested", "child.mirrow"), MIRROW_SNIPPET);
+  await writeFile(
+    path.join(inputDir, "nested", "child.mirrow"),
+    MIRROW_SNIPPET
+  );
   await writeFile(
     path.join(inputDir, "nested", "deeper", "grandchild.mirrow"),
     MIRROW_SNIPPET
@@ -162,13 +171,15 @@ test("watch mode honours directory depth", async () => {
     }
   });
 
-  await writeFile(path.join(inputDir, "nested", "child.mirrow"), MIRROW_SNIPPET);
+  await writeFile(
+    path.join(inputDir, "nested", "child.mirrow"),
+    MIRROW_SNIPPET
+  );
   await delay(200);
 
-  await assert.rejects(
-    fs.access(path.join(outputDir, "nested", "child.svg")),
-    { code: "ENOENT" }
-  );
+  await assert.rejects(fs.access(path.join(outputDir, "nested", "child.svg")), {
+    code: "ENOENT",
+  });
 
   controller.abort();
   await watcher;

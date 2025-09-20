@@ -1,6 +1,6 @@
 {
   "name": "mirrow",
-  "version": "0.1.0",
+  "version": "0.1.4",
   "description": "",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -14,12 +14,16 @@
     "dist"
   ],
   "dependencies": {
-    "@mirrow/core": "^0.1.2",
+    "@mirrowjs/core": "^0.1.2",
     "commander": "^12.1.0",
     "chokidar": "^3.6.0"
   },
   "devDependencies": {
     "@types/node": "^24.5.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MirrowApp/mirrow.git"
   },
   "keywords": [
     "svg",
