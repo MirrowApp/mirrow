@@ -642,12 +642,12 @@ class Parser {
       token.type == TokenType.NUMBER &&
       CSS_UNIT_SUFFIXES.has(nextToken.value.toLowerCase())
     ) {
-      console.log("i");
       this.advance();
       this.advance();
       return returnable;
     } else if (isCssException(token.value)) {
       this.advance();
+      returnable.value = returnable.value.replaceAll(nextToken.value, "");
       return returnable;
     }
   }
