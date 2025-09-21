@@ -632,7 +632,6 @@ class Parser {
   private fallThrough(): StringLiteral | void {
     const token = this.peek();
     const nextToken = this.peek(1);
-    console.log(token, nextToken, "FALLTHROUGH");
     const returnable = {
       type: "StringLiteral",
       value: token.value + nextToken.value,
