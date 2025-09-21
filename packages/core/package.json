@@ -1,6 +1,6 @@
 {
   "name": "@mirrowjs/core",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Core compiler and parser for the Mirrow DSL",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
