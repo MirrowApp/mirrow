@@ -19,6 +19,8 @@ export class LexerError extends Error {
   }
 }
 
+const validIdentifierTokens = ["_", "-", "#"];
+
 export enum TokenType {
   STRING = "STRING",
   NUMBER = "NUMBER",
@@ -109,14 +111,17 @@ export class Lexer {
 
       if (
         nextChar &&
-        (this.isDigit(nextChar) || (nextChar === "." && thirdChar && this.isDigit(thirdChar)))
+        (this.isDigit(nextChar) ||
+          (nextChar === "." && thirdChar && this.isDigit(thirdChar)))
       ) {
         return this.readNumber();
       }
 
       if (
         nextChar &&
-        (this.isAlpha(nextChar) || this.isDigit(nextChar) || nextChar === "_" || nextChar === "-")
+        (this.isAlpha(nextChar) ||
+          this.isDigit(nextChar) ||
+          validIdentifierTokens.includes(nextChar))
       ) {
         return this.readIdentifier();
       }
@@ -124,7 +129,7 @@ export class Lexer {
       // Isolated '-' should fall through and be treated as unknown for now.
     }
 
-    if (this.isAlpha(char) || char === "_" || char === "-") {
+    if (this.isAlpha(char) || validIdentifierTokens.includes(char)) {
       return this.readIdentifier();
     }
 
@@ -345,8 +350,7 @@ export class Lexer {
         !char ||
         (!this.isAlpha(char) &&
           !this.isDigit(char) &&
-          char !== "_" &&
-          char !== "-")
+          !validIdentifierTokens.includes(char))
       ) {
         break;
       }

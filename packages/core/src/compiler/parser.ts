@@ -594,6 +594,7 @@ class Parser {
       return fall;
     }
     const token = this.peek();
+
     switch (token.type) {
       case TokenType.STRING:
         return this.parseStringLiteral();
@@ -631,22 +632,31 @@ class Parser {
   private fallThrough(): StringLiteral | void {
     const token = this.peek();
     const nextToken = this.peek(1);
+    console.log(token, nextToken, "FALLTHROUGH");
+    const returnable = {
+      type: "StringLiteral",
+      value: token.value + nextToken.value,
+      position: token.position,
+    } as StringLiteral;
     if (
-      (token.type == TokenType.NUMBER &&
-        CSS_UNIT_SUFFIXES.has(nextToken.value.toLowerCase())) ||
-      isCssException(token.value)
+      token.type == TokenType.NUMBER &&
+      CSS_UNIT_SUFFIXES.has(nextToken.value.toLowerCase())
     ) {
+      console.log("i");
       this.advance();
       this.advance();
-      return {
-        type: "StringLiteral",
-        value: token.value + nextToken.value,
-        position: token.position,
-      } as StringLiteral;
+      return returnable;
+    } else if (isCssException(token.value)) {
+      this.advance();
+      return returnable;
     }
   }
 
   private parseTupleItem(): LiteralValue {
+    const fall = this.fallThrough();
+    if (fall) {
+      return fall;
+    }
     const token = this.peek();
     switch (token.type) {
       case TokenType.STRING:
@@ -673,10 +683,6 @@ class Parser {
   }
 
   private parseNumberLiteral(): NumberLiteral | StringLiteral {
-    const fall = this.fallThrough();
-    if (fall) {
-      return fall;
-    }
     const token = this.consume(TokenType.NUMBER, "Expected numeric literal");
     return {
       type: "NumberLiteral",

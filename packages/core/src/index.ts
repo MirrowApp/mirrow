@@ -41,39 +41,15 @@ process.on("uncaughtException", (err) => {
 function runExample(): void {
   const code = `
   svg {
-  box: (0, 0, 200, 200)
-  size: (320px, 320px)
-  preserve: (xMidYMid, meet)
-
   circle {
-    id: "pulse"
-    at: (100, 100)
     r: 40
-    fill: "hotpink"
+    fill: #fff
 
-    animate {
-      prop: "r"
-      from: 40
-      to: 60
-      dur: 2s
-      repeat: indefinite
-    }
-  }
-
-  @hover, @active {
-    #pulse {
-      cy: 150px;
-      r: 60px;
-    }
+    animate {}
   }
 
   
 }
-  style {
-    circle {
-      transition: cy 0.3s ease, r 0.3s ease, fill 0.3s ease;
-    }
-  }
   `;
   console.log(compile(code));
 }

@@ -240,7 +240,12 @@ export const CSS_UNIT_SUFFIXES = new Set<string>([
   "fr",
 ]);
 
-const cssExceptions = new Set<string>(["indefinite", "none", "auto"]);
+const cssExceptions = new Set<string | RegExp>([
+  "indefinite",
+  "none",
+  "auto",
+  /^#(?:[0-9a-fA-F]{3}){1,2}$/,
+]);
 
 const specialCodeblocks = new Set<string>(["style", "script"]);
 
@@ -249,7 +254,15 @@ export function isCssState(name: string): boolean {
 }
 
 export function isCssException(name: string): boolean {
-  return cssExceptions.has(name);
+  for (const exception of cssExceptions) {
+    if (typeof exception === "string" && exception === name) {
+      return true;
+    }
+    if (exception instanceof RegExp && exception.test(name)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 export function isJsEvent(name: string): boolean {
