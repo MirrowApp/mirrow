@@ -7,6 +7,8 @@
 <p align="center"><em>A design-first language for living SVGs.</em></p>
 
 ---
+[![npm version](https://img.shields.io/npm/v/mirrow.svg)](https://www.npmjs.com/package/mirrow)
+![CI](https://github.com/MirrowApp/mirrow/actions/workflows/ci.yml/badge.svg)
 
 Mirrow is a playground and production tooling for vector animators working with integrating motion, and interaction seemlessly into their workflow. Instead of treating SVGs as static assets, Mirrow gives them the starring role in your workflow. Describe shapes, styling, animation, and even interaction logic in one expressive format that compiles seamlessly.
 
