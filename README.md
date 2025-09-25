@@ -21,13 +21,24 @@ Mirrow is a playground and production tooling for vector animators working with 
 - Animation, state, and styling live together.
 - Output slots into your applications for a seemless adoption.
 
-## How it flows 🌀
+```css
+svg {
+  size: (150, 150)
 
-1. Sketch intent with Mirrow's domain-specific language.
-2. Let the compiler translate it into production-ready components.
-3. Drop the results into your production UI.
+  rect {
+    at: (20, 20)
+    size: (100px, 100px)  // px string now validated
+    radius: (8, 8)
+    stroke: #333
+    strokeWidth: 2
+    id: "box"
+  }
 
-Whether it’s a logo that shifts on hover or a quick motion prototype, Mirrow keeps you focused on creating, not wiring up glue code.
+  @hover {
+    #box { stroke: #0070f3; strokeWidth: 3 }
+  }
+}
+```
 
 ## Getting started 🚀
 
