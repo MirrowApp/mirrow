@@ -77,138 +77,139 @@ const failValidation = (
   );
 };
 
-const ATTRIBUTE_VALIDATORS: {
-  number: AttributeValidator<NumberAttributeSpec>;
-  string: AttributeValidator<StringAttributeSpec>;
-  boolean: AttributeValidator<BooleanAttributeSpec>;
-  tuple: AttributeValidator<TupleAttributeSpec>;
-} = {
-  number: (context, spec, value) => {
-    if (value.type === "NumberLiteral") {
-      const numberValue = value as NumberLiteral;
-      if (spec.validator && !spec.validator(numberValue.value)) {
-        failValidation(context, "failed validation", value.position);
-      }
-      return;
-    }
-
-    if (value.type === "StringLiteral") {
-      return;
-    }
-
-    failValidation(context, "expects a numeric value", value.position);
-  },
-  string: (context, spec, value) => {
-    if (value.type !== "StringLiteral") {
-      failValidation(
-        context,
-        `expects a string value got '${value.type}'`,
-        value.position
-      );
-    }
-    const stringValue = value as StringLiteral;
-    if (spec.validator && !spec.validator(stringValue.value)) {
-      failValidation(context, "failed validation", value.position);
-    }
-  },
-  boolean: (context, spec, value) => {
-    if (value.type !== "IdentifierLiteral") {
-      failValidation(context, "expects 'true' or 'false'", value.position);
-    }
-    const booleanValue = value as IdentifierLiteral;
-    const normalized = booleanValue.name.toLowerCase();
-    if (normalized !== "true" && normalized !== "false") {
-      failValidation(context, "expects 'true' or 'false'", value.position);
-    }
-    if (spec.validator && !spec.validator(normalized === "true")) {
-      failValidation(context, "failed validation", value.position);
-    }
-  },
-  tuple: (context, spec, value) => {
-    if (value.type !== "TupleLiteral") {
-      failValidation(context, "expects a tuple", value.position);
-    }
-    const tupleValue = value as TupleLiteral;
-    if (tupleValue.values.length !== spec.length) {
-      failValidation(
-        context,
-        `expects a tuple of length ${spec.length}`,
-        value.position
-      );
-    }
-    const itemTypes = spec.itemTypes;
-    const collected: Array<number | string> = [];
-    let shouldRunValidator = true;
-
-    for (let index = 0; index < tupleValue.values.length; index++) {
-      const entry = tupleValue.values[index]!;
-      const expectedType = itemTypes?.[index] ?? itemTypes?.[0] ?? "number";
-
-      if (expectedType === "number") {
-        if (entry.type === "NumberLiteral") {
-          collected.push((entry as NumberLiteral).value);
-          continue;
-        }
-
-        if (entry.type === "StringLiteral") {
-          collected.push((entry as StringLiteral).value);
-          shouldRunValidator = false;
-          continue;
-        }
-
-        failValidation(
-          context,
-          "expects numeric or string tuple items",
-          entry.position
-        );
-        continue;
-      }
-
-      if (expectedType === "string") {
-        if (entry.type !== "StringLiteral") {
-          failValidation(context, "expects string tuple items", entry.position);
-        }
-        collected.push((entry as StringLiteral).value);
-        continue;
-      }
-
-      if (expectedType === "identifier") {
-        if (entry.type !== "IdentifierLiteral") {
-          failValidation(
-            context,
-            "expects identifier tuple items",
-            entry.position
-          );
-        }
-        collected.push((entry as IdentifierLiteral).name);
-        continue;
-      }
-
-      failValidation(
-        context,
-        "has unsupported tuple item type",
-        entry.position
-      );
-    }
-
-    if (
-      shouldRunValidator &&
-      spec.validator &&
-      !spec.validator(collected as never)
-    ) {
-      failValidation(context, "failed validation", value.position);
-    }
-  },
-};
-
 class Parser {
   private index = 0;
   private tokens: Token[];
   private readonly keywordCatalog = getSvgKeywords();
   private newGenTokens: Token[] = [];
+  private fellThrough: boolean = false;
+  private ATTRIBUTE_VALIDATORS: {
+    number: AttributeValidator<NumberAttributeSpec>;
+    string: AttributeValidator<StringAttributeSpec>;
+    boolean: AttributeValidator<BooleanAttributeSpec>;
+    tuple: AttributeValidator<TupleAttributeSpec>;
+  }
 
   constructor(tokens: Token[]) {
     this.tokens = tokens;
+    this.ATTRIBUTE_VALIDATORS = {
+      number: (context, spec, value) => {
+        if (value.type === "NumberLiteral") {
+          const numberValue = value as NumberLiteral;
+          if (spec.validator && !spec.validator(numberValue.value)) {
+            failValidation(context, "failed validation", value.position);
+          }
+          return;
+        }
+
+        if (value.type === "StringLiteral" && this.fellThrough) {
+          return;
+        }
+
+        failValidation(context, "expects a numeric value", value.position);
+      },
+      string: (context, spec, value) => {
+        if (value.type !== "StringLiteral") {
+          failValidation(
+            context,
+            `expects a string value got '${value.type}'`,
+            value.position
+          );
+        }
+        const stringValue = value as StringLiteral;
+        if (spec.validator && !spec.validator(stringValue.value)) {
+          failValidation(context, "failed validation", value.position);
+        }
+      },
+      boolean: (context, spec, value) => {
+        if (value.type !== "IdentifierLiteral") {
+          failValidation(context, "expects 'true' or 'false'", value.position);
+        }
+        const booleanValue = value as IdentifierLiteral;
+        const normalized = booleanValue.name.toLowerCase();
+        if (normalized !== "true" && normalized !== "false") {
+          failValidation(context, "expects 'true' or 'false'", value.position);
+        }
+        if (spec.validator && !spec.validator(normalized === "true")) {
+          failValidation(context, "failed validation", value.position);
+        }
+      },
+      tuple: (context, spec, value) => {
+        if (value.type !== "TupleLiteral") {
+          failValidation(context, "expects a tuple", value.position);
+        }
+        const tupleValue = value as TupleLiteral;
+        if (tupleValue.values.length !== spec.length) {
+          failValidation(
+            context,
+            `expects a tuple of length ${spec.length}`,
+            value.position
+          );
+        }
+        const itemTypes = spec.itemTypes;
+        const collected: Array<number | string> = [];
+        let shouldRunValidator = true;
+
+        for (let index = 0; index < tupleValue.values.length; index++) {
+          const entry = tupleValue.values[index]!;
+          const expectedType = itemTypes?.[index] ?? itemTypes?.[0] ?? "number";
+
+          if (expectedType === "number") {
+            if (entry.type === "NumberLiteral") {
+              collected.push((entry as NumberLiteral).value);
+              continue;
+            }
+
+            if (entry.type === "StringLiteral") {
+              collected.push((entry as StringLiteral).value);
+              shouldRunValidator = false;
+              continue;
+            }
+
+            failValidation(
+              context,
+              "expects numeric or string tuple items",
+              entry.position
+            );
+            continue;
+          }
+
+          if (expectedType === "string") {
+            if (entry.type !== "StringLiteral") {
+              failValidation(context, "expects string tuple items", entry.position);
+            }
+            collected.push((entry as StringLiteral).value);
+            continue;
+          }
+
+          if (expectedType === "identifier") {
+            if (entry.type !== "IdentifierLiteral") {
+              failValidation(
+                context,
+                "expects identifier tuple items",
+                entry.position
+              );
+            }
+            collected.push((entry as IdentifierLiteral).name);
+            continue;
+          }
+
+          failValidation(
+            context,
+            "has unsupported tuple item type",
+            entry.position
+          );
+        }
+
+        if (
+          shouldRunValidator &&
+          spec.validator &&
+          !spec.validator(collected as never)
+        ) {
+          failValidation(context, "failed validation", value.position);
+        }
+      },
+    };
   }
 
   parse(): [RootNode, SpecialBlock[]] {
@@ -350,6 +351,7 @@ class Parser {
       );
     }
     this.validateAttributeValue(parentKeyword, nameToken.value, spec, value);
+    this.fellThrough = false;
     seen.add(nameToken.value);
     return {
       type: "Attribute",
@@ -591,6 +593,7 @@ class Parser {
   private parseAttributeValue(): LiteralValue {
     const fall = this.fallThrough();
     if (fall) {
+      this.fellThrough = true;
       return fall;
     }
     const token = this.peek();
@@ -709,7 +712,7 @@ class Parser {
     spec: T,
     value: LiteralValue
   ): void {
-    const handler = ATTRIBUTE_VALIDATORS[spec.type] as AttributeValidator<T>;
+    const handler = this.ATTRIBUTE_VALIDATORS[spec.type] as AttributeValidator<T>;
     handler({ keyword, attributeName }, spec, value);
   }
 
