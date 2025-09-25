@@ -53,13 +53,13 @@ svg {
   circle {
     id: "pulse"
     at: (100, 100)
-    r: "hello"
+    r: 40
     fill: "hotpink"
 
     animate {
       prop: "r"
-      from: 40
-      to: 60
+      from: 40px
+      to: 60px
       dur: 2s
       repeat: indefinite
     }
