@@ -92,10 +92,6 @@ const ATTRIBUTE_VALIDATORS: {
       return;
     }
 
-    if (value.type === "StringLiteral") {
-      return;
-    }
-
     failValidation(context, "expects a numeric value", value.position);
   },
   string: (context, spec, value) => {

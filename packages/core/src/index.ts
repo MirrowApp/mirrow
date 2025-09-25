@@ -40,16 +40,39 @@ process.on("uncaughtException", (err) => {
 
 function runExample(): void {
   const code = `
-  svg {
-  circle {
-    r: 40
-    fill: #fff
+svg {
+  // Internal coordinate space: viewBox x y w h
+  box: (0, 0, 200, 200)
 
-    animate {}
+  // Rendered size on the page
+  size: (200px, 200px)
+
+  // How to map box to size
+  preserve: (xMidYMid, meet)
+
+  circle {
+    id: "pulse"
+    at: (100, 100)
+    r: "hello"
+    fill: "hotpink"
+
+    animate {
+      prop: "r"
+      from: 40
+      to: 60
+      dur: 2s
+      repeat: indefinite
+    }
   }
 
-  
+  @hover, @active {
+    #pulse {
+      cy: 150px
+      r: 60px
+    }
+  }
 }
+
   `;
   console.log(compile(code));
 }
