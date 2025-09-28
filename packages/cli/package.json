@@ -1,6 +1,6 @@
 {
   "name": "mirrow",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -14,9 +14,9 @@
     "dist"
   ],
   "dependencies": {
-    "@mirrowjs/core": "^0.1.2",
-    "commander": "^12.1.0",
-    "chokidar": "^3.6.0"
+    "@mirrowjs/core": "^0.1.9",
+    "chokidar": "^4.0.3",
+    "commander": "^14.0.1"
   },
   "devDependencies": {
     "@types/node": "^24.5.2"

@@ -2,8 +2,8 @@ import { promises as fs } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
-import chokidar from "chokidar";
-
+import type * as Chokidar from "chokidar";
+import * as chokidar from "chokidar";
 import { compile } from "@mirrowjs/core";
 
 export interface CliOptions {
@@ -191,8 +191,7 @@ export async function watchMirrow(
 
   await runMirrow(options);
   console.log(
-    `Watching ${formatPath(input)} (depth: ${
-      depth === Infinity ? "unbound" : depth
+    `Watching ${formatPath(input)} (depth: ${depth === Infinity ? "unbound" : depth
     })`
   );
   console.log("Press Ctrl+C to stop.\n");
@@ -218,7 +217,8 @@ async function watchDirectory(
   const inputRoot = path.resolve(inputDir);
   const outputRoot = path.resolve(outputDir);
 
-  const watcherOptions: chokidar.WatchOptions = {
+  const watcherOptions = {
+    depth: 0,
     persistent: true,
     ignoreInitial: true,
     awaitWriteFinish: {
