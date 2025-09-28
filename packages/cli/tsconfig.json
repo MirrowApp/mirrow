@@ -5,7 +5,9 @@
     "module": "nodenext",
     "moduleResolution": "nodenext",
     "types": ["node"],
-    "outDir": "dist"
+    "outDir": "dist",
+    "esModuleInterop": true,  
+    "allowSyntheticDefaultImports": true
   },
   "include": ["src"]
 }
