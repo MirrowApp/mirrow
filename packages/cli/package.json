@@ -19,7 +19,7 @@
     "commander": "^14.0.1"
   },
   "devDependencies": {
-    "@types/node": "^24.5.2"
+    "@types/node": "^24.6.2"
   },
   "repository": {
     "type": "git",
