@@ -10,9 +10,10 @@ import { fileURLToPath } from 'url';
 import type { CliOptions } from "./runner.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-
 const cliPkg = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf-8'));
-const corePkg = JSON.parse(readFileSync(join(__dirname, '../../core/package.json'), 'utf-8'));
+
+import corePackage from "@mirrowjs/core/package.json" with { type: "json" };
+const corePkg = corePackage;
 
 function parseDepth(raw: string): number | typeof Infinity {
   if (raw === "unbound") {
