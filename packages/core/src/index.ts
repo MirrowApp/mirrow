@@ -13,19 +13,14 @@ export {
   isJsEvent,
 } from "./data/codeblocks.js";
 
-export interface CompileOptions {
-  format?: "svg" | "tsx";
-}
-
-export function compile(code: string, options: CompileOptions = {}): string {
-  const format = options.format ?? "svg";
-  if (format !== "svg") {
-    throw new Error(`Unsupported output format: ${format}`);
-  }
+export function compile(code: string): string {
   const tokens = tokenize(code);
   const ast = parse(tokens);
   return compileAst(ast[0], ast[1]);
 }
+
+export { tokenize } from './compiler/lexer.js';
+export { parse } from './compiler/parser.js';
 
 process.on("uncaughtException", (err) => {
   if (err instanceof ParserError || err instanceof LexerError) {

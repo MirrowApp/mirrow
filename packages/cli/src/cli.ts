@@ -3,8 +3,16 @@ import process from "node:process";
 
 import { Command, InvalidArgumentError } from "commander";
 
+import { readFileSync } from 'fs';
+import { join, dirname } from 'path';
 import { runMirrow, watchMirrow } from "./runner.js";
+import { fileURLToPath } from 'url';
 import type { CliOptions } from "./runner.js";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+const cliPkg = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf-8'));
+const corePkg = JSON.parse(readFileSync(join(__dirname, '../../core/package.json'), 'utf-8'));
 
 function parseDepth(raw: string): number | typeof Infinity {
   if (raw === "unbound") {
@@ -34,6 +42,7 @@ export async function runCli(argv: string[]): Promise<void> {
       parseDepth,
       0
     )
+    .version(`CLI: ${cliPkg.version}\nCore: ${corePkg.version}`)
     .option("-w, --watch", "Watch inputs and rebuild on change")
     .allowExcessArguments(false)
     .showHelpAfterError();

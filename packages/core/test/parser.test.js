@@ -1,7 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { tokenize } from "../dist/compiler/lexer.js";
-import { parse } from "../dist/compiler/parser.js";
+import { tokenize, parse } from "../dist/index.js";
 
 const parseFromCode = (code) => {
   const [root] = parse(tokenize(code));
