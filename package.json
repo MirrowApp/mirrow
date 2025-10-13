@@ -4,10 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev:compiler": "npx tsx packages/core/src/index.ts",
-    "build:core": "tsc -p packages/core/tsconfig.json",
-    "test": "npm run build:core && npm run build:cli && node --test packages/core/test/*.test.js packages/cli/test/*.test.js",
-    "build:cli": "npm run build -w mirrow"
+    "dev:compiler": "bunx tsx packages/core/src/index.ts",
+    "build:core": "cd packages/core && bun run build",
+    "test": "bun run build:core && bun run build:cli && bun --test packages/core/test/*.test.js packages/cli/test/*.test.js",
+    "build:cli": "cd packages/cli && bun run build"
   },
   "private": true,
   "workspaces": [

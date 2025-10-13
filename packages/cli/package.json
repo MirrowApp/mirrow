@@ -1,14 +1,14 @@
 {
   "name": "mirrow",
-  "version": "0.1.5",
-  "description": "",
+  "version": "0.2.0",
+  "description": "Mirrow CLI interface for generating SVGs",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
     "mirrow": "./dist/index.js"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json"
+    "build": "bun build src/index.ts --outdir dist --target node"
   },
   "files": [
     "dist"

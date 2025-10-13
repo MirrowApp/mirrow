@@ -1,11 +1,11 @@
 {
   "name": "@mirrowjs/core",
-  "version": "0.1.9",
+  "version": "0.2.0",
   "description": "Core compiler and parser for the Mirrow DSL",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "tsc -p tsconfig.json"
+    "build": "bun build src/index.ts --outdir dist --format esm --target=node"
   },
   "keywords": [
     "svg",

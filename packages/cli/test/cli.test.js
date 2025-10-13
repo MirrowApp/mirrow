@@ -6,7 +6,7 @@ import path from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 
 import { compile } from "@mirrowjs/core";
-import { runMirrow, watchMirrow } from "../dist/runner.js";
+import { runMirrow, watchMirrow } from "../src/runner.js";
 
 const MIRROW_SNIPPET = `svg { size: (24, 24) }`;
 const UPDATED_SNIPPET = `svg { size: (48, 48) }`;
