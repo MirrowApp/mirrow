@@ -10,12 +10,12 @@
     },
     "packages/cli": {
       "name": "mirrow",
-      "version": "0.1.5",
+      "version": "0.2.0",
       "bin": {
         "mirrow": "./dist/index.js",
       },
       "dependencies": {
-        "@mirrowjs/core": "^0.1.9",
+        "@mirrowjs/core": "^0.2.0",
         "chokidar": "^4.0.3",
         "commander": "^14.0.1",
       },
@@ -25,7 +25,7 @@
     },
     "packages/core": {
       "name": "@mirrowjs/core",
-      "version": "0.1.9",
+      "version": "0.2.0",
       "devDependencies": {
         "@types/node": "^24.7.2",
       },
@@ -109,5 +109,7 @@
     "typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
 
     "undici-types": ["undici-types@7.14.0", "", {}, "sha512-QQiYxHuyZ9gQUIrmPo3IA+hUl4KYk8uSA7cHrcKd/l3p1OTpZcM0Tbp9x7FAtXdAYhlasd60ncPpgu6ihG6TOA=="],
+
+    "mirrow/@mirrowjs/core": ["@mirrowjs/core@0.2.0", "", {}, "sha512-yPFhO5iD1ihyOByNCMWqy/h0vLdbddVzelgz3lYQP+V/FVxjbKPpX9jfTTQwc05bYiNMUfmMMp3jESIAcdRUHw=="],
   }
 }
