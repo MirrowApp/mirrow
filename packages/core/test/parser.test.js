@@ -142,3 +142,97 @@ test("feSpotLight supports 3d tuples", () => {
     "specularExponent",
   ]);
 });
+
+test("undeclared variable throws error", () => {
+  assert.throws(
+    () => parseFromCode(`svg { size: ($width, 100) }`),
+    {
+      name: "ParserError",
+      message: /Variable '\$width' is not defined/,
+    }
+  );
+});
+
+test("undeclared variable in tuple throws error", () => {
+  assert.throws(
+    () => parseFromCode(`rect { at: (10, 20) size: ($w, $h) }`),
+    {
+      name: "ParserError",
+      message: /Variable '\$(w|h)' is not defined/,
+    }
+  );
+});
+
+test("duplicate variable declaration throws error", () => {
+  assert.throws(
+    () => parseFromCode(`vars { width: 100 width: 200 } svg { size: (100, 100) }`),
+    {
+      name: "ParserError",
+      message: /Variable 'width' is already declared/,
+    }
+  );
+});
+
+test("invalid variable value throws error", () => {
+  assert.throws(
+    () => parseFromCode(`vars { invalid: $other } svg { size: (100, 100) }`),
+    {
+      name: "ParserError",
+      message: /Invalid variable value.*Variables can only contain literal values/,
+    }
+  );
+});
+
+test("variable reference succeeds with declared variable", () => {
+  const ast = parseFromCode(`vars { width: 150 } svg { size: ($width, 100) }`);
+  assert.ok(ast.varsBlock, "varsBlock should exist");
+  assert.equal(ast.varsBlock.declarations.length, 1);
+  assert.equal(ast.varsBlock.declarations[0].name, "width");
+
+  const svg = ast.children[0];
+  const sizeAttr = svg.attributes.find(attr => attr.name === "size");
+  assert.ok(sizeAttr, "size attribute should exist");
+  assert.equal(sizeAttr.value.type, "TupleLiteral");
+  assert.equal(sizeAttr.value.values[0].type, "VariableReference");
+  assert.equal(sizeAttr.value.values[0].name, "width");
+});
+
+test("multiple declared variables work correctly", () => {
+  const ast = parseFromCode(`
+    vars {
+      width: 150
+      height: 200
+      color: "#ff0000"
+    }
+    rect { at: (0, 0) size: ($width, $height) fill: $color }
+  `);
+
+  assert.equal(ast.varsBlock.declarations.length, 3);
+  const rect = ast.children[0];
+  const sizeAttr = rect.attributes.find(attr => attr.name === "size");
+  const fillAttr = rect.attributes.find(attr => attr.name === "fill");
+
+  assert.equal(sizeAttr.value.values[0].name, "width");
+  assert.equal(sizeAttr.value.values[1].name, "height");
+  assert.equal(fillAttr.value.name, "color");
+});
+
+test("empty vars block is valid", () => {
+  const ast = parseFromCode(`vars {} svg { size: (100, 100) }`);
+  assert.ok(ast.varsBlock, "varsBlock should exist");
+  assert.equal(ast.varsBlock.declarations.length, 0);
+});
+
+test("variables with hyphens and underscores", () => {
+  const ast = parseFromCode(`
+    vars {
+      my-width: 100
+      my_height: 200
+    }
+    rect { at: (0, 0) size: ($my-width, $my_height) }
+  `);
+
+  assert.equal(ast.varsBlock.declarations.length, 2);
+  assert.equal(ast.varsBlock.declarations[0].name, "my-width");
+  assert.equal(ast.varsBlock.declarations[1].name, "my_height");
+});

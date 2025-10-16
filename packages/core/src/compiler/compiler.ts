@@ -10,6 +10,8 @@ import type {
   LiteralValue,
   SpecialBlock,
   TextNode,
+  VarsBlock,
+  VariableReference,
 } from "./ast.js";
 
 interface CssDirectiveEntry {
@@ -22,14 +24,58 @@ interface JsDirectiveEntry {
   block: string;
 }
 
+type VariableContext = Map<string, LiteralValue>;
+
 interface CompileContext {
   keywords: Map<string, Keyword>;
   indent: string;
   cssDirectives: Map<string, CssDirectiveEntry[]>;
   jsDirectives: Map<string, JsDirectiveEntry[]>;
+  variables: VariableContext;
 }
 
 const DEFAULT_INDENT = "  ";
+
+function buildVariableContext(varsBlock?: VarsBlock): VariableContext {
+  const context = new Map<string, LiteralValue>();
+
+  if (!varsBlock) {
+    return context;
+  }
+
+  for (const declaration of varsBlock.declarations) {
+    context.set(declaration.name, declaration.value);
+  }
+
+  return context;
+}
+
+function resolveValue(
+  value: LiteralValue,
+  variables: VariableContext
+): LiteralValue {
+  // If it's a VariableReference, resolve it to the actual value
+  if (value.type === "VariableReference") {
+    const resolvedValue = variables.get(value.name);
+    if (!resolvedValue) {
+      throw new Error(`Variable '${value.name}' is not defined`);
+    }
+    // Recursively resolve in case the value itself contains references
+    return resolveValue(resolvedValue, variables);
+  }
+
+  // If it's a TupleLiteral, resolve each value in the tuple
+  if (value.type === "TupleLiteral") {
+    return {
+      type: "TupleLiteral",
+      values: value.values.map((v) => resolveValue(v, variables)),
+      position: value.position,
+    };
+  }
+
+  // For other literal types, return as-is
+  return value;
+}
 
 export function compileAst(ast: AST, blocks: SpecialBlock[]): string {
   const context: CompileContext = {
@@ -37,6 +83,7 @@ export function compileAst(ast: AST, blocks: SpecialBlock[]): string {
     indent: DEFAULT_INDENT,
     cssDirectives: new Map(),
     jsDirectives: new Map(),
+    variables: buildVariableContext(ast.varsBlock),
   };
 
   const markup = ast.children
@@ -71,7 +118,7 @@ function compileElement(
   }
 
   const indent = context.indent.repeat(depth);
-  const attributes = renderAttributes(node, keyword);
+  const attributes = renderAttributes(node, keyword, context);
   if (node.dataId) {
     attributes.unshift(
       `data-identifier="${escapeAttributeValue(node.dataId)}"`
@@ -106,7 +153,11 @@ function compileChild(
   return compileElement(child, context, depth);
 }
 
-function renderAttributes(node: ElementNode, keyword: Keyword): string[] {
+function renderAttributes(
+  node: ElementNode,
+  keyword: Keyword,
+  context: CompileContext
+): string[] {
   const rendered: string[] = [];
 
   for (const attributeNode of node.attributes) {
@@ -115,7 +166,7 @@ function renderAttributes(node: ElementNode, keyword: Keyword): string[] {
       continue;
     }
 
-    const value = createAttributeValue(attributeNode, spec);
+    const value = createAttributeValue(attributeNode, spec, context.variables);
     const produced = spec.produce
       ? spec.produce(value as never)
       : { [spec.name]: value };
@@ -139,9 +190,11 @@ function collectDirectives(node: ElementNode, context: CompileContext): void {
   if (node.cssStates.size > 0) {
     const cssEntries = context.cssDirectives.get(node.dataId) ?? [];
     for (const directive of node.cssStates) {
+      const blockContent = extractBlockContent(directive.block);
+      const resolvedContent = resolveVariablesInText(blockContent, context.variables);
       cssEntries.push({
         state: directive.name,
-        block: extractBlockContent(directive.block),
+        block: resolvedContent,
       });
     }
     context.cssDirectives.set(node.dataId, cssEntries);
@@ -150,9 +203,11 @@ function collectDirectives(node: ElementNode, context: CompileContext): void {
   if (node.jsEvents.size > 0) {
     const jsEntries = context.jsDirectives.get(node.dataId) ?? [];
     for (const directive of node.jsEvents) {
+      const blockContent = extractBlockContent(directive.block);
+      const resolvedContent = resolveVariablesInText(blockContent, context.variables);
       jsEntries.push({
         event: directive.name,
-        block: extractBlockContent(directive.block),
+        block: resolvedContent,
       });
     }
     context.jsDirectives.set(node.dataId, jsEntries);
@@ -161,9 +216,11 @@ function collectDirectives(node: ElementNode, context: CompileContext): void {
 
 function createAttributeValue(
   attributeNode: AttributeNode,
-  spec: AttributeSpec
+  spec: AttributeSpec,
+  variables: VariableContext
 ): unknown {
-  const value = attributeNode.value;
+  // Resolve variables before processing the value
+  const value = resolveValue(attributeNode.value, variables);
 
   switch (spec.type) {
     case "number":
@@ -254,6 +311,42 @@ function extractBlockContent(block: string): string {
     return trimmed.slice(1, -1).trim();
   }
   return trimmed;
+}
+
+function resolveVariablesInText(
+  text: string,
+  variables: VariableContext
+): string {
+  // Replace $variableName with the actual value
+  return text.replace(/\$([a-zA-Z_-][a-zA-Z0-9_-]*)/g, (match, varName) => {
+    const value = variables.get(varName);
+    if (!value) {
+      throw new Error(`Variable '$${varName}' is not defined`);
+    }
+    // Convert the literal value to a string representation
+    return literalValueToString(value);
+  });
+}
+
+function literalValueToString(value: LiteralValue): string {
+  switch (value.type) {
+    case "NumberLiteral":
+      return String(value.value);
+    case "StringLiteral":
+      return value.value;
+    case "IdentifierLiteral":
+      return value.value;
+    case "BooleanLiteral":
+      return String(value.value);
+    case "TupleLiteral":
+      // For tuples, join values with commas
+      return value.values.map(literalValueToString).join(", ");
+    case "VariableReference":
+      // This shouldn't happen if resolveValue was called first
+      throw new Error(
+        `Unresolved variable reference: $${value.name}`
+      );
+  }
 }
 
 function indentBlock(content: string, indent: string): string {

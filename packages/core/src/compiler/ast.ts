@@ -28,11 +28,30 @@ export interface TupleLiteral {
   position: SourcePosition;
 }
 
+export interface VariableReference {
+  type: "VariableReference";
+  name: string;
+  position: SourcePosition;
+}
+
+export interface VariableDeclaration {
+  name: string;
+  value: LiteralValue;
+  position: SourcePosition;
+}
+
+export interface VarsBlock {
+  type: "VarsBlock";
+  declarations: VariableDeclaration[];
+  position: SourcePosition;
+}
+
 export type LiteralValue =
   | NumberLiteral
   | StringLiteral
   | IdentifierLiteral
-  | TupleLiteral;
+  | TupleLiteral
+  | VariableReference;
 
 export interface CssStateDirective {
   type: "CssState";
@@ -77,6 +96,7 @@ export interface ElementNode {
 export interface RootNode {
   type: "Root";
   children: ElementNode[];
+  varsBlock?: VarsBlock;
 }
 
 export type SpecialBlock = {
