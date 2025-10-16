@@ -17,6 +17,7 @@ Mirrow is a playground and production tooling for vector animators working with 
 - SVGs are treated as first-class citizens rather than static assets.
 - A familiar, designer-friendly syntax.
 - Animation, state, and styling live together.
+- Simple variable support.
 - Output slots into your applications for a seemless adoption.
 
 ```css

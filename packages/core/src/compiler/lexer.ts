@@ -25,6 +25,7 @@ export enum TokenType {
   STRING = "STRING",
   NUMBER = "NUMBER",
   IDENTIFIER = "IDENTIFIER",
+  DOLLAR = "DOLLAR",
   AT = "AT",
   COLON = "COLON",
   EQUALS = "EQUALS",
@@ -127,6 +128,10 @@ export class Lexer {
       }
 
       // Isolated '-' should fall through and be treated as unknown for now.
+    }
+
+    if (char === "$") {
+      return this.readVariableReference();
     }
 
     if (this.isAlpha(char) || validIdentifierTokens.includes(char)) {
@@ -360,6 +365,52 @@ export class Lexer {
 
     return {
       type: TokenType.IDENTIFIER,
+      value,
+      position: startPosition,
+    };
+  }
+
+  public readVariableReference(): Token {
+    const startPosition = { line: this.line, column: this.column };
+    
+    // Consume the $ character
+    this.advance();
+    
+    // Read the variable name
+    let value = "$";
+    
+    // Check if there's a valid identifier after the $
+    if (this.position < this.input.length) {
+      const firstChar = this.input[this.position];
+      if (firstChar && (this.isAlpha(firstChar) || firstChar === "_")) {
+        // Read the identifier part
+        while (this.position < this.input.length) {
+          const char = this.input[this.position];
+          if (
+            !char ||
+            (!this.isAlpha(char) &&
+              !this.isDigit(char) &&
+              !["_", "-"].includes(char))
+          ) {
+            break;
+          }
+          value += char;
+          this.advance();
+        }
+      } else {
+        // Invalid variable reference - just the $ character
+        throw new LexerError(
+          "Invalid variable reference: variable name must start with a letter or underscore",
+          startPosition
+        );
+      }
+    } else {
+      // $ at end of input
+      throw new LexerError("Unexpected end of input after '$'", startPosition);
+    }
+
+    return {
+      type: TokenType.DOLLAR,
       value,
       position: startPosition,
     };

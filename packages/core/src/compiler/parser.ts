@@ -23,6 +23,9 @@ import {
   type SpecialBlock,
   type StringLiteral,
   type TupleLiteral,
+  type VariableDeclaration,
+  type VariableReference,
+  type VarsBlock,
 } from "./ast.js";
 
 interface ElementBlockEntries {
@@ -83,6 +86,7 @@ class Parser {
   private readonly keywordCatalog = getSvgKeywords();
   private newGenTokens: Token[] = [];
   private fellThrough: boolean = false;
+  private symbolTable: Map<string, LiteralValue> = new Map();
   private ATTRIBUTE_VALIDATORS: {
     number: AttributeValidator<NumberAttributeSpec>;
     string: AttributeValidator<StringAttributeSpec>;
@@ -90,8 +94,9 @@ class Parser {
     tuple: AttributeValidator<TupleAttributeSpec>;
   }
 
-  constructor(tokens: Token[]) {
+  constructor(tokens: Token[], symbolTable?: Map<string, LiteralValue>) {
     this.tokens = tokens;
+    this.symbolTable = symbolTable ?? new Map();
     this.ATTRIBUTE_VALIDATORS = {
       number: (context, spec, value) => {
         if (value.type === "NumberLiteral") {
@@ -106,9 +111,19 @@ class Parser {
           return;
         }
 
+        // Allow variable references - they will be resolved during compilation
+        if (value.type === "VariableReference") {
+          return;
+        }
+
         failValidation(context, "expects a numeric value", value.position);
       },
       string: (context, spec, value) => {
+        // Allow variable references - they will be resolved during compilation
+        if (value.type === "VariableReference") {
+          return;
+        }
+
         if (value.type !== "StringLiteral") {
           failValidation(
             context,
@@ -122,6 +137,11 @@ class Parser {
         }
       },
       boolean: (context, spec, value) => {
+        // Allow variable references - they will be resolved during compilation
+        if (value.type === "VariableReference") {
+          return;
+        }
+
         if (value.type !== "IdentifierLiteral") {
           failValidation(context, "expects 'true' or 'false'", value.position);
         }
@@ -135,6 +155,11 @@ class Parser {
         }
       },
       tuple: (context, spec, value) => {
+        // Allow variable references - they will be resolved during compilation
+        if (value.type === "VariableReference") {
+          return;
+        }
+
         if (value.type !== "TupleLiteral") {
           failValidation(context, "expects a tuple", value.position);
         }
@@ -153,6 +178,12 @@ class Parser {
         for (let index = 0; index < tupleValue.values.length; index++) {
           const entry = tupleValue.values[index]!;
           const expectedType = itemTypes?.[index] ?? itemTypes?.[0] ?? "number";
+
+          // Allow variable references - they will be resolved during compilation
+          if (entry.type === "VariableReference") {
+            shouldRunValidator = false;
+            continue;
+          }
 
           if (expectedType === "number") {
             if (entry.type === "NumberLiteral") {
@@ -215,12 +246,29 @@ class Parser {
   parse(): [RootNode, SpecialBlock[]] {
     const children: ElementNode[] = [];
     const specialBlocks: SpecialBlock[] = [];
+    let varsBlock: VarsBlock | undefined = undefined;
 
     while (!this.check(TokenType.EOF)) {
       const peekValue = this.peek().value;
       const position = this.peek().position;
       const type = "SpecialBlock";
       const codeblock = isSpecialCodeblock(peekValue);
+      
+      // Handle vars block
+      if (
+        peekValue === "vars" &&
+        this.check(TokenType.IDENTIFIER) &&
+        this.peek(1).type === TokenType.BLOCK
+      ) {
+        if (varsBlock) {
+          throw new ParserError("Only one 'vars' block is allowed per document", position);
+        }
+        this.consume(TokenType.IDENTIFIER, "Expected 'vars' identifier");
+        const blockToken = this.consume(TokenType.BLOCK, "Expected vars block");
+        varsBlock = this.parseVarsBlock(blockToken, position);
+        continue;
+      }
+      
       if (
         codeblock.valid &&
         this.check(TokenType.IDENTIFIER) &&
@@ -263,7 +311,104 @@ class Parser {
     while (!this.check(TokenType.EOF)) {
       children.push(this.parseElement());
     }
-    return [{ type: "Root", children }, specialBlocks];
+    const rootNode: RootNode = { type: "Root", children };
+    if (varsBlock) {
+      rootNode.varsBlock = varsBlock;
+    }
+    return [rootNode, specialBlocks];
+  }
+
+  private parseVarsBlock(blockToken: Token, position: SourcePosition): VarsBlock {
+    const raw = blockToken.value;
+    if (!raw.startsWith("{") || !raw.endsWith("}")) {
+      throw new ParserError("Malformed vars block", blockToken.position);
+    }
+
+    const inner = raw.slice(1, raw.length - 1);
+    if (inner.trim().length === 0) {
+      return {
+        type: "VarsBlock",
+        declarations: [],
+        position,
+      };
+    }
+
+    const blockTokens = tokenize(inner);
+    const nestedParser = new Parser(blockTokens);
+    const declarations = nestedParser.parseVariableDeclarations();
+
+    // Build symbol table for validation
+    for (const declaration of declarations) {
+      if (this.symbolTable.has(declaration.name)) {
+        throw new ParserError(
+          `Variable '${declaration.name}' is already declared`,
+          declaration.position
+        );
+      }
+      this.symbolTable.set(declaration.name, declaration.value);
+    }
+
+    return {
+      type: "VarsBlock",
+      declarations,
+      position,
+    };
+  }
+
+  private parseVariableDeclarations(): VariableDeclaration[] {
+    const declarations: VariableDeclaration[] = [];
+    const seen = new Set<string>();
+
+    while (!this.check(TokenType.EOF)) {
+      const nameToken = this.consume(
+        TokenType.IDENTIFIER,
+        "Expected variable name"
+      );
+
+      if (seen.has(nameToken.value)) {
+        throw new ParserError(
+          `Variable '${nameToken.value}' is already declared`,
+          nameToken.position
+        );
+      }
+
+      this.consume(
+        TokenType.COLON,
+        "Expected ':' after variable name"
+      );
+
+      const value = this.parseVariableValue();
+      
+      declarations.push({
+        name: nameToken.value,
+        value,
+        position: nameToken.position,
+      });
+
+      seen.add(nameToken.value);
+    }
+
+    return declarations;
+  }
+
+  private parseVariableValue(): LiteralValue {
+    const token = this.peek();
+
+    switch (token.type) {
+      case TokenType.STRING:
+        return this.parseStringLiteral();
+      case TokenType.NUMBER:
+        return this.parseNumberLiteral();
+      case TokenType.IDENTIFIER:
+        return this.parseIdentifierLiteral();
+      case TokenType.LEFT_PAREN:
+        return this.parseTupleLiteral();
+      default:
+        throw new ParserError(
+          `Invalid variable value: ${token.value}. Variables can only contain literal values (strings, numbers, identifiers, or tuples)`,
+          token.position
+        );
+    }
   }
 
   private parseElement(): ElementNode {
@@ -317,7 +462,7 @@ class Parser {
     }
 
     const blockTokens = tokenize(inner);
-    const nestedParser = new Parser(blockTokens);
+    const nestedParser = new Parser(blockTokens, this.symbolTable);
     return nestedParser.collectBlockEntries(keyword);
   }
 
@@ -607,6 +752,8 @@ class Parser {
         return this.parseIdentifierLiteral();
       case TokenType.LEFT_PAREN:
         return this.parseTupleLiteral();
+      case TokenType.DOLLAR:
+        return this.parseVariableReference();
       default:
         throw new ParserError(
           `Unexpected token '${token.value}' in attribute value`,
@@ -667,6 +814,8 @@ class Parser {
         return this.parseNumberLiteral();
       case TokenType.IDENTIFIER:
         return this.parseIdentifierLiteral();
+      case TokenType.DOLLAR:
+        return this.parseVariableReference();
       default:
         throw new ParserError(
           `Invalid value inside tuple: ${token.type}`,
@@ -702,6 +851,30 @@ class Parser {
     return {
       type: "IdentifierLiteral",
       name: token.value,
+      position: token.position,
+    };
+  }
+
+  private parseVariableReference(): VariableReference {
+    const token = this.consume(
+      TokenType.DOLLAR,
+      "Expected variable reference"
+    );
+
+    // Extract the variable name (remove the $ prefix)
+    const variableName = token.value.substring(1);
+
+    // Validate that the variable has been declared
+    if (!this.symbolTable.has(variableName)) {
+      throw new ParserError(
+        `Variable '$${variableName}' is not defined`,
+        token.position
+      );
+    }
+
+    return {
+      type: "VariableReference",
+      name: variableName,
       position: token.position,
     };
   }
